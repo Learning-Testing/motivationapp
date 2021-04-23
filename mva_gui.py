@@ -5,38 +5,33 @@ import datetime
 
 class TimeCheck:
     def __init__(self):
-        self.start_time = 0
-        self.end_time = 0
+        self.start_time = datetime.datetime.now()
+        self.end_time = datetime.datetime.now()
         self.total_time_diff = 0
-        self.subject = ''
 
     def set_time_start(self):
         self.start_time = datetime.datetime.now()
 
     def time_diff(self, end_time):
-        full_time = int(end_time - self.start_time)
+        self.end_time = end_time
+        full_time = int((end_time - self.start_time).total_seconds())
         self.total_time_diff += full_time
 
 
 class General:
     def __init__(self):
         self.start_button_press = False
-        self.start_button_text = "Start"
-        self.counter = 0  # what is this counter for?
-
+        self.check_if_started = False
         self.subject_options = []
-        self.subject = ""
-        self.subject_textbox_label = ""
-        self.subject_textbox = ""
-        self.subjects_dropdown = ""
-        self.subject_label = ""
-
         self.subtopic_options = []
+        self.project_options = []
+        self.subject_seconds = 0
+        self.subtopic_seconds = 0
+        self.project_seconds = 0
+
+        self.subject = ""
         self.subtopic = ""
-        self.subtopic_textbox_label = ""
-        self.subtopic_textbox = ""
-        self.subtopics_dropdown = ""
-        self.subtopic_label = ""
+        self.project = ""
 
 
 class GuiWindow:
@@ -51,102 +46,229 @@ class GuiWindow:
         self.mainframe.rowconfigure(0, weight=1)
         self.mainframe.pack(pady=100, padx=100)
 
-        self.subject_options(general)
-        self.subtopic_options(general)
+        self.seconds_passed = int((timer.end_time - timer.start_time).total_seconds())
+        self.subject_timer = tk.StringVar()
+        self.subject_timer.set("")
+        self.subtopic_timer = tk.StringVar()
+        self.subtopic_timer.set("")
+        self.project_timer = tk.StringVar()
+        self.project_timer.set("")
+
+        self.subject_options = general.subject_options
+        self.subject = ""
+        self.subject_textbox_label = tk.Label(self.mainframe, text="Enter a new subject")
+        self.subject_textbox = tk.Text(self.mainframe, height=1, width=12)
+        self.subjects_dropdown = ""
+        self.subject_label = tk.Label(self.mainframe, text="Choose a subject")
+        self.subject_seconds = 0
+        self.subject_timer_label = tk.Label(self.mainframe, textvariable=self.subject_timer)
+        self.subject_choice = tk.StringVar(self.master)
+
+        self.subtopic_options = general.subtopic_options
+        self.subtopic = ""
+        self.subtopic_textbox_label = tk.Label(self.mainframe, text="Enter a new subtopic")
+        self.subtopic_textbox = tk.Text(self.mainframe, height=1, width=12)
+        self.subtopics_dropdown = ""
+        self.subtopic_label = tk.Label(self.mainframe, text="Choose a subtopic")
+        self.subtopic_seconds = 0
+        self.subtopic_timer_label = tk.Label(self.mainframe, textvariable=self.subtopic_timer)
+        self.subtopic_choice = tk.StringVar(self.master)
+
+        self.project_options = general.project_options
+        self.project = ""
+        self.project_textbox_label = tk.Label(self.mainframe, text="Enter a new project")
+        self.project_textbox = tk.Text(self.mainframe, height=1, width=12)
+        self.project_dropdown = ""
+        self.project_label = tk.Label(self.mainframe, text="Choose a project")
+        self.project_seconds = 0
+        self.project_timer_label = tk.Label(self.mainframe, textvariable=self.project_timer)
+        self.project_choice = tk.StringVar(self.master)
+
+        self.add_button = tk.Button(self.mainframe, text="Add",
+                                    command=lambda: self.add_text_to_options(general, timer))
+        self.description_label = tk.Label(self.mainframe,
+                                          text=f"{general.subject}, {general.subtopic}, {general.project}")
+
+        self.call_display(general, timer)
+        self.update_timers(general, timer)
+        # self.update_timer_button(general, timer)
+
+    def call_display(self, general, timer):
+        self.subject_options_func()
+        self.subtopic_options_func()
+        self.project_options_func()
         self.update_timer_button(general, timer)
-        self.add_text_to_options(general)
+        self.add_text_to_options(general, timer)
 
-    def subject_options(self, general):
+    def hide_labels(self):
+        self.subject_label.grid_remove()
+        self.subtopic_label.grid_remove()
+        self.project_label.grid_remove()
+
+        self.subject_textbox_label.grid_remove()
+        self.subtopic_textbox_label.grid_remove()
+        self.project_textbox_label.grid_remove()
+
+        self.subject_textbox.grid_remove()
+        self.subtopic_textbox.grid_remove()
+        self.project_textbox.grid_remove()
+
+        self.add_button.grid_remove()
+        self.description_label.grid(row=2, column=2)
+
+    def show_labels(self):
+        self.subject_label.grid()
+        self.subtopic_label.grid()
+        self.project_label.grid()
+
+        self.subject_textbox_label.grid()
+        self.subtopic_textbox_label.grid()
+        self.project_textbox_label.grid()
+
+        self.subject_textbox.grid()
+        self.subtopic_textbox.grid()
+        self.project_textbox.grid()
+
+        self.subject_timer_label.grid_remove()
+        self.subtopic_timer_label.grid_remove()
+        self.project_timer_label.grid_remove()
+
+        self.add_button.grid()
+        self.description_label.grid_remove()
+
+    def subject_options_func(self):
         subject_column = 1
-        subjecttype = tk.StringVar(self.master)
-        if len(general.subject_options) == 0:
-            subjecttype.set("")
-            general.subjects_dropdown = tk.OptionMenu(self.mainframe, subjecttype, "")
+        if len(self.subject_options) == 0:
+            self.subject_choice.set("")
+            self.subjects_dropdown = tk.OptionMenu(self.mainframe, self.subject_choice, "")
         else:
-            subjecttype.set(general.subject_options[0])
-            general.subjects_dropdown = tk.OptionMenu(self.mainframe, subjecttype, *general.subject_options)
+            self.subject_choice.set(self.subject_options[0])
+            self.subjects_dropdown = tk.OptionMenu(self.mainframe, self.subject_choice, *self.subject_options)
 
-        general.subject_textbox_label = tk.Label(self.mainframe,
-                                                 text="Enter a new subject").grid(row=2,
-                                                                                  column=subject_column)
-        general.subject_textbox = tk.Text(self.mainframe, height=2, width=10).grid(row=3, column=subject_column)
+        self.subject_textbox_label.grid(row=2, column=subject_column)
+        self.subject_textbox.grid(row=3, column=subject_column)
 
-        general.subject_label = tk.Label(self.mainframe, text="Choose a subject").grid(row=4, column=subject_column)
-        general.subjects_dropdown.grid(row=5, column=subject_column)
+        self.subject_label.grid(row=4, column=subject_column)
+        self.subjects_dropdown.grid(row=5, column=subject_column)
 
-    def subtopic_options(self, general):
+    def subtopic_options_func(self):
         subtopic_column = 2
-        subtopictype = tk.StringVar(self.master)
-        if len(general.subtopic_options) == 0:
-            subtopictype.set("")
-            general.subtopics_dropdown = tk.OptionMenu(self.mainframe, subtopictype, "")
+
+        if len(self.subtopic_options) == 0:
+            self.subtopic_choice.set("")
+            self.subtopics_dropdown = tk.OptionMenu(self.mainframe, self.subtopic_choice, "")
         else:
-            subtopictype.set(general.subtopic_options[0])
-            general.subtopics_dropdown = tk.OptionMenu(self.mainframe, subtopictype, *general.subtopic_options)
+            self.subtopic_choice.set(self.subtopic_options[0])
+            self.subtopics_dropdown = tk.OptionMenu(self.mainframe, self.subtopic_choice, *self.subtopic_options)
 
-        general.subtopic_textbox_label = tk.Label(self.mainframe,
-                                                  text="Enter a new subtopic").grid(row=2,
-                                                                                    column=subtopic_column)
-        general.subtopic_textbox = tk.Text(self.mainframe, height=2, width=10).grid(row=3, column=subtopic_column)
+        self.subtopic_textbox_label.grid(row=2, column=subtopic_column)
+        self.subtopic_textbox.grid(row=3, column=subtopic_column)
 
-        general.subtopic_label = tk.Label(self.mainframe, text="Choose a subtopic").grid(row=4, column=subtopic_column)
-        general.subtopics_dropdown.grid(row=5, column=subtopic_column)
+        self.subtopic_label.grid(row=4, column=subtopic_column)
+        self.subtopics_dropdown.grid(row=5, column=subtopic_column)
 
-    def add_text_to_options(self, general):
-        def get_textbox_data():
-            subject_text_value = general.subject_textbox.get("1.0", "end-1c")
-            if len(subject_text_value) > 0:
-                general.subject_options.append(subject_text_value)
-                general.subjects_dropdown.set(subject_text_value)
-                general.subject_textbox.delete("1.0", "end-1c")
+    def project_options_func(self):
+        project_column = 3
 
-            subtopic_text_value = general.subtopic_textbox.get("1.0", "end-1c")
-            if len(subject_text_value) > 0:
-                general.subtopic_options.append(subtopic_text_value)
-                general.subtopics_dropdown.set(subtopic_text_value)
-                general.subtopic_textbox.delete("1.0", "end-1c")
+        if len(self.project_options) == 0:
+            self.project_choice.set("")
+            self.project_dropdown = tk.OptionMenu(self.mainframe, self.project_choice, "")
+        else:
+            self.project_choice.set(self.project_options[0])
+            self.project_dropdown = tk.OptionMenu(self.mainframe, self.project_choice, *self.project_options)
 
-        add_button = tk.Button(self.mainframe, text="Add", command=get_textbox_data)
-        add_button.grid(row=2, column=0)
+        self.project_textbox_label.grid(row=2, column=project_column)
+        self.project_textbox.grid(row=3, column=project_column)
+
+        self.project_label.grid(row=4, column=project_column)
+        self.project_dropdown.grid(row=5, column=project_column)
+
+    def add_text_to_options(self, general, timer):
+        subject_text_value = self.subject_textbox.get("1.0", "end-1c")
+        if len(subject_text_value) > 0:
+            self.subject_options.append(subject_text_value)
+            self.subject_options = self.subject_options.sort()
+            self.subject_textbox.delete("1.0", "end-1c")
+            self.call_display(general, timer)
+
+        subtopic_text_value = self.subtopic_textbox.get("1.0", "end-1c")
+        if len(subtopic_text_value) > 0:
+            self.subtopic_options.append(subtopic_text_value)
+            self.subtopic_options = self.subtopic_options.sort()
+            self.subtopic_textbox.delete("1.0", "end-1c")
+            self.call_display(general, timer)
+
+        project_text_value = self.project_textbox.get("1.0", "end-1c")
+        if len(project_text_value) > 0:
+            self.project_options.append(project_text_value)
+            self.project_options = self.project_options.sort()
+            self.project_textbox.delete("1.0", "end-1c")
+            self.call_display(general, timer)
+
+        self.add_button.grid(row=2, column=0)
 
     def update_timer_button(self, general, timer):
-        def change_text():
+        def update_button():
+            if general.start_button_press is False:
+                general.start_button_press = True
+            else:
+                general.start_button_press = False
+
             if general.start_button_press is True:
-                text = "Stop"
+                general.subject = str(self.subject_choice.get())
+                general.subtopic = str(self.subtopic_choice.get())
+                general.project = str(self.project_choice.get())
+
+                db_manage.seconds_for_item(general)
+
+                start_stop_button.config(text="Stop")
                 timer.set_time_start()
+                self.update_timers(general, timer)
 
-                buttonlabel = tk.Label(self.mainframe, text=general.subject + ", " + general.subtopic)
-                buttonlabel.grid(row=0, column=1)
+                self.description_label = tk.Label(self.mainframe,
+                                                  text=f"{general.subject}, {general.subtopic}, {general.project}")
 
-                general.subject_textbox_label.grid_remove()
-                general.subtopic_textbox_label.grid_remove()
-                general.subject_textbox.grid_remove()
-                general.subtopic_textbox.grid_remove()
-                return text
+                self.hide_labels()
 
             else:
-                text = "Start"
+                start_stop_button.config(text="Start")
 
-                general.subject_textbox_label.grid()
-                general.subtopic_textbox_label.grid()
-                general.subject_textbox.grid()
-                general.subtopic_textbox.grid()
-
+                self.show_labels()
                 db_manage.daily_study_entry(subject=general.subject,
                                             subtopic=general.subtopic,
+                                            project=general.project,
                                             start_time=timer.start_time,
                                             end_time=timer.end_time)
 
-                return text
+        start_stop_button = tk.Button(self.mainframe, text="Start", command=update_button)
+        start_stop_button.grid(row=4, column=0)
 
-        b = tk.Button(self.mainframe, text=general.start_button_text, command=change_text)
-        b.grid(row=4, column=0)
-
-    def update_timer(self, general, timer):
+    def update_timers(self, general, timer):
         if general.start_button_press is True:
-            timer.time_diff(datetime.datetime.now())
-            subject_timer = tk.StringVar()
-            subject_timer.set(timer.total_time_diff)
+
+            timer.end_time = datetime.datetime.now()
+
+            self.subject_timer_label.grid(row=4, column=1)
+            self.subtopic_timer_label.grid(row=4, column=2)
+            self.project_timer_label.grid(row=4, column=3)
+
+            self.seconds_passed = int((timer.end_time - timer.start_time).total_seconds())
+
+            self.refresh_timer(general)
+            self.mainframe.after(1000, self.update_timers, general, timer)
+
+    def refresh_timer(self, general):
+        subject_hours, subject_remainder = divmod(self.seconds_passed + general.subject_seconds, 3600)
+        subject_minutes, subject_seconds = divmod(subject_remainder, 60)
+        self.subject_timer.set(f"{subject_hours}:{subject_minutes}:{subject_seconds}")
+
+        subtopic_hours, subtopic_remainder = divmod(self.seconds_passed + general.subtopic_seconds, 3600)
+        subtopic_minutes, subtopic_seconds = divmod(subtopic_remainder, 60)
+        self.subtopic_timer.set(f"{subject_hours}:{subtopic_minutes}:{subtopic_seconds}")
+
+        project_hours, project_remainder = divmod(self.seconds_passed + general.project_seconds, 3600)
+        project_minutes, project_seconds = divmod(project_remainder, 60)
+        self.project_timer.set(f"{project_hours}:{project_minutes}:{project_seconds}")
 
 
 def main():
