@@ -138,7 +138,8 @@ class GuiWindow:
 
     def subject_options_func(self):
         subject_column = 1
-        if len(self.subject_options) == 0:
+        print(self.subject_options)
+        if self.subject_options is None or len(self.subject_options) == 0:
             self.subject_choice.set("")
             self.subjects_dropdown = tk.OptionMenu(self.mainframe, self.subject_choice, "")
         else:
@@ -187,21 +188,21 @@ class GuiWindow:
         subject_text_value = self.subject_textbox.get("1.0", "end-1c")
         if len(subject_text_value) > 0:
             self.subject_options.append(subject_text_value)
-            self.subject_options = self.subject_options.sort()
+            self.subject_options = sorted(self.subject_options)
             self.subject_textbox.delete("1.0", "end-1c")
             self.call_display(general, timer)
 
         subtopic_text_value = self.subtopic_textbox.get("1.0", "end-1c")
         if len(subtopic_text_value) > 0:
             self.subtopic_options.append(subtopic_text_value)
-            self.subtopic_options = self.subtopic_options.sort()
+            self.subtopic_options = sorted(self.subtopic_options)
             self.subtopic_textbox.delete("1.0", "end-1c")
             self.call_display(general, timer)
 
         project_text_value = self.project_textbox.get("1.0", "end-1c")
         if len(project_text_value) > 0:
             self.project_options.append(project_text_value)
-            self.project_options = self.project_options.sort()
+            self.project_options = sorted(self.project_options)
             self.project_textbox.delete("1.0", "end-1c")
             self.call_display(general, timer)
 

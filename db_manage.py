@@ -66,9 +66,9 @@ def options_from_sql(general):
     for i in sql_projects:
         general.project_options.append(i[0])
 
-    general.subject_options.sort()
-    general.subtopic_options.sort()
-    general.project_options.sort()
+    sorted(general.subject_options)
+    sorted(general.subtopic_options)
+    sorted(general.project_options)
 
 
 def seconds_for_item(general):
