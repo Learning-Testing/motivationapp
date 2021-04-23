@@ -7,21 +7,14 @@ class TimeCheck:
     def __init__(self):
         self.start_time = datetime.datetime.now()
         self.end_time = datetime.datetime.now()
-        self.total_time_diff = 0
 
     def set_time_start(self):
         self.start_time = datetime.datetime.now()
-
-    def time_diff(self, end_time):
-        self.end_time = end_time
-        full_time = int((end_time - self.start_time).total_seconds())
-        self.total_time_diff += full_time
 
 
 class General:
     def __init__(self):
         self.start_button_press = False
-        self.check_if_started = False
         self.subject_options = []
         self.subtopic_options = []
         self.project_options = []
@@ -55,32 +48,26 @@ class GuiWindow:
         self.project_timer.set("")
 
         self.subject_options = general.subject_options
-        self.subject = ""
         self.subject_textbox_label = tk.Label(self.mainframe, text="Enter a new subject")
         self.subject_textbox = tk.Text(self.mainframe, height=1, width=12)
         self.subjects_dropdown = ""
         self.subject_label = tk.Label(self.mainframe, text="Choose a subject")
-        self.subject_seconds = 0
         self.subject_timer_label = tk.Label(self.mainframe, textvariable=self.subject_timer)
         self.subject_choice = tk.StringVar(self.master)
 
         self.subtopic_options = general.subtopic_options
-        self.subtopic = ""
         self.subtopic_textbox_label = tk.Label(self.mainframe, text="Enter a new subtopic")
         self.subtopic_textbox = tk.Text(self.mainframe, height=1, width=12)
         self.subtopics_dropdown = ""
         self.subtopic_label = tk.Label(self.mainframe, text="Choose a subtopic")
-        self.subtopic_seconds = 0
         self.subtopic_timer_label = tk.Label(self.mainframe, textvariable=self.subtopic_timer)
         self.subtopic_choice = tk.StringVar(self.master)
 
         self.project_options = general.project_options
-        self.project = ""
         self.project_textbox_label = tk.Label(self.mainframe, text="Enter a new project")
         self.project_textbox = tk.Text(self.mainframe, height=1, width=12)
         self.project_dropdown = ""
         self.project_label = tk.Label(self.mainframe, text="Choose a project")
-        self.project_seconds = 0
         self.project_timer_label = tk.Label(self.mainframe, textvariable=self.project_timer)
         self.project_choice = tk.StringVar(self.master)
 
@@ -90,14 +77,14 @@ class GuiWindow:
                                           text=f"{general.subject}, {general.subtopic}, {general.project}")
 
         self.call_display(general, timer)
-        self.update_timers(general, timer)
-        # self.update_timer_button(general, timer)
+        # self.update_timers(general, timer)
+        self.update_timer_button(general, timer)
 
     def call_display(self, general, timer):
         self.subject_options_func()
         self.subtopic_options_func()
         self.project_options_func()
-        self.update_timer_button(general, timer)
+        # self.update_timer_button(general, timer)
         self.add_text_to_options(general, timer)
 
     def hide_labels(self):
@@ -114,6 +101,11 @@ class GuiWindow:
         self.project_textbox.grid_remove()
 
         self.add_button.grid_remove()
+
+        self.subject_timer_label.grid(row=4, column=1)
+        self.subtopic_timer_label.grid(row=4, column=2)
+        self.project_timer_label.grid(row=4, column=3)
+
         self.description_label.grid(row=2, column=2)
 
     def show_labels(self):
@@ -129,17 +121,17 @@ class GuiWindow:
         self.subtopic_textbox.grid()
         self.project_textbox.grid()
 
+        self.add_button.grid()
+
         self.subject_timer_label.grid_remove()
         self.subtopic_timer_label.grid_remove()
         self.project_timer_label.grid_remove()
 
-        self.add_button.grid()
         self.description_label.grid_remove()
 
     def subject_options_func(self):
         subject_column = 1
-        print(self.subject_options)
-        if self.subject_options is None or len(self.subject_options) == 0:
+        if len(self.subject_options) == 0:
             self.subject_choice.set("")
             self.subjects_dropdown = tk.OptionMenu(self.mainframe, self.subject_choice, "")
         else:
@@ -232,6 +224,7 @@ class GuiWindow:
                 self.hide_labels()
 
             else:
+                print(f"start_stop_button = {str(general.start_button_press)}")
                 start_stop_button.config(text="Start")
 
                 self.show_labels()
@@ -240,18 +233,18 @@ class GuiWindow:
                                             project=general.project,
                                             start_time=timer.start_time,
                                             end_time=timer.end_time)
+                general.subject_seconds = 0
+                general.subtopic_seconds = 0
+                general.project_seconds = 0
+                self.seconds_passed = 0
+                timer.end_time = 0
 
         start_stop_button = tk.Button(self.mainframe, text="Start", command=update_button)
         start_stop_button.grid(row=4, column=0)
 
     def update_timers(self, general, timer):
         if general.start_button_press is True:
-
             timer.end_time = datetime.datetime.now()
-
-            self.subject_timer_label.grid(row=4, column=1)
-            self.subtopic_timer_label.grid(row=4, column=2)
-            self.project_timer_label.grid(row=4, column=3)
 
             self.seconds_passed = int((timer.end_time - timer.start_time).total_seconds())
 
@@ -262,14 +255,17 @@ class GuiWindow:
         subject_hours, subject_remainder = divmod(self.seconds_passed + general.subject_seconds, 3600)
         subject_minutes, subject_seconds = divmod(subject_remainder, 60)
         self.subject_timer.set(f"{subject_hours}:{subject_minutes}:{subject_seconds}")
+        print(general.subject, f"{subject_hours}:{subject_minutes}:{subject_seconds}")
 
         subtopic_hours, subtopic_remainder = divmod(self.seconds_passed + general.subtopic_seconds, 3600)
         subtopic_minutes, subtopic_seconds = divmod(subtopic_remainder, 60)
         self.subtopic_timer.set(f"{subject_hours}:{subtopic_minutes}:{subtopic_seconds}")
+        print(general.subtopic, f"{subject_hours}:{subtopic_minutes}:{subtopic_seconds}")
 
         project_hours, project_remainder = divmod(self.seconds_passed + general.project_seconds, 3600)
         project_minutes, project_seconds = divmod(project_remainder, 60)
         self.project_timer.set(f"{project_hours}:{project_minutes}:{project_seconds}")
+        print(general.project, f"{project_hours}:{project_minutes}:{project_seconds}")
 
 
 def main():
