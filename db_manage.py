@@ -1,7 +1,8 @@
 import os
 import sqlite3
+from datetime import datetime
 
-sql_file = 'Motivation_App.sqlite'
+sql_file = 'testing.sqlite'
 
 
 def check_if_db_exists():
@@ -40,13 +41,22 @@ def check_existing_tables():
 def daily_study_entry(subject, subtopic, project, start_time, end_time):
     conn = sqlite3.connect(sql_file)
     c = conn.cursor()
-    c.execute("INSERT INTO Daily_Study (user_id, subject, subtopic, project, start_time, end_time) "
-              "VALUES (?, ?, ?, ?, ?, ?)", (1,
-                                            subject,
-                                            subtopic,
-                                            project,
-                                            start_time,
-                                            end_time))
+    if subject == "None":
+        subject = None
+    if subtopic == "None":
+        subtopic = None
+    if project == "None":
+        project = None
+    if subject is None and subtopic is None and project is None:
+        pass
+    else:
+        c.execute("INSERT INTO Daily_Study (user_id, subject, subtopic, project, start_time, end_time) "
+                  "VALUES (?, ?, ?, ?, ?, ?)", (1,
+                                                subject,
+                                                subtopic,
+                                                project,
+                                                start_time,
+                                                end_time))
     conn.commit()
     conn.close()
 
@@ -105,3 +115,103 @@ def seconds_for_item(general):
             general.project_seconds += int((end_date - start_date).total_seconds())
 
     conn.close()
+
+
+def get_times():
+    conn = sqlite3.connect(sql_file)
+    c = conn.cursor()
+    c.execute("SELECT * FROM daily_study WHERE DATE(start_time) == "
+              "DATE('now', 'localtime');")  # -- current day
+    str_day_data = c.fetchall()
+    day_str = "Total time for today is: "
+    handle_subjects_times(str_day_data, day_str)
+
+    c.execute("SELECT * FROM daily_study WHERE DATE(start_time) >= "
+              "DATE('now', 'localtime', 'weekday 0', '-7 days');")  # -- current week
+    str_week_data = c.fetchall()
+    week_str = "Total time for this week is: "
+    handle_subjects_times(str_week_data, week_str)
+
+    c.execute("SELECT * FROM daily_study WHERE start_time BETWEEN DATE('now', 'start of month') AND "
+              "DATE('now', 'localtime', 'start of month', '+1 month', '-1 day');")  # -- current month
+    str_month_data = c.fetchall()
+    month_str = "Total time for this month is: "
+    handle_subjects_times(str_month_data, month_str)
+
+    c.execute("SELECT * FROM daily_study WHERE start_time BETWEEN DATE('now', 'start of year') AND "
+              "DATE('now', 'localtime', 'start of year', '+12 month', '-1 day');")  # -- current year
+    str_year_data = c.fetchall()
+    year_str = "Total time for this year is: "
+    handle_subjects_times(str_year_data, year_str)
+
+
+class DataTracking:
+    def __init__(self, subject):
+        self.subject = subject
+        self.subtopics_dict = {}
+
+    def check_subtopic(self, subtopic, project, seconds):
+        if subtopic not in self.subtopics_dict:
+            self.subtopics_dict[subtopic] = {project: seconds}
+        elif project not in self.subtopics_dict[subtopic]:
+            self.subtopics_dict[subtopic][project] = seconds
+        else:
+            self.subtopics_dict[subtopic][project] += seconds
+
+
+def handle_subjects_times(str_data, print_str):
+    subject_classes = {}
+
+    for i in str_data:
+        subject = i[2]
+        subtopic = i[3]
+        project = i[4]
+        start_time = i[5]
+        start_time_dateobject = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S.%f')
+        end_time = i[6]
+        end_time_dateobject = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S.%f')
+        seconds = int((end_time_dateobject - start_time_dateobject).total_seconds())
+
+        if subject not in subject_classes:
+            subject_classes[subject] = DataTracking(subject)
+            subject_classes[subject].check_subtopic(subtopic, project, seconds)
+        else:
+            subject_classes[subject].check_subtopic(subtopic, project, seconds)
+
+    # print(172, subject_classes)
+    total_time = 0
+    for subject in subject_classes:
+        # print(174, i)
+        for subtopic in subject_classes[subject].subtopics_dict:
+            for project in subject_classes[subject].subtopics_dict[subtopic]:
+                dict_seconds = subject_classes[subject].subtopics_dict[subtopic][project]
+                subject_hours, subject_remainder = divmod(dict_seconds, 3600)
+                subject_minutes, subject_seconds = divmod(subject_remainder, 60)
+                print(f"{subject} - {subtopic} - {project} = "
+                      f"{subject_hours} hours, "
+                      f"{subject_minutes} minutes")
+                total_time += dict_seconds
+    total_hours, total_remainder = divmod(total_time, 3600)
+    total_minutes, total_seconds = divmod(total_remainder, 60)
+    constructed_str = f"{total_hours} hours, {total_minutes} minutes"
+    print(print_str + constructed_str + "\n\n")
+
+
+def copy_data():
+    conn_testing = sqlite3.connect(sql_file)
+    c_testing = conn_testing.cursor()
+    conn_live = sqlite3.connect("Motivation_App.sqlite")
+    c_live = conn_live.cursor()
+
+    c_live.execute("SELECT * FROM daily_study")
+    all_data = c_live.fetchall()
+    conn_live.close()
+
+    for (num_id, user_id, subject, subtopic, project, start_time, end_time) in all_data:
+        c_testing.execute("INSERT INTO daily_study VALUES(?, ?, ?, ?, ?, ?, ?)",
+                          (num_id, user_id, subject, subtopic, project, start_time, end_time))
+    conn_testing.commit()
+    conn_testing.close()
+
+
+
