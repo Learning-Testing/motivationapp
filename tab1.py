@@ -14,28 +14,9 @@ import db_manage
         self.labelA.grid(column=1, row=1)"""
 
 
-class Frame2(ttk.Frame):
-    def __init__(self, container):
-        super().__init__()
-
-        self.labelB = ttk.Label(self, text="This is on Frame Two")
-        self.labelB.grid(column=1, row=1)
-
-
 class Frame1(ttk.Frame):
     def __init__(self, container, general, timer):
         super().__init__()
-
-        self.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.pack(pady=100, padx=100)
-
-        """self.labelA = ttk.Label(self, text="This is on Frame One")
-        self.labelA.grid(column=1, row=1)
-
-        self.labelC = tk.Label(self, text="Testing 123")
-        self.labelC.grid(column=1, row=2)"""
 
         self.call_display_bool = True
         self.show_display_on_startup = False
@@ -78,7 +59,6 @@ class Frame1(ttk.Frame):
         self.subject_options_func(general)
         self.subtopic_options_func(general)
         self.project_options_func(general)
-        # self.update_timer_button(general, timer)
         self.add_text_to_options(general, timer)
 
     def hide_labels(self):
@@ -207,7 +187,7 @@ class Frame1(ttk.Frame):
                 self.hide_labels()
 
             else:
-                print(f"start_stop_button = {str(general.start_button_press)}")
+                # print(f"start_stop_button = {str(general.start_button_press)}")
                 start_stop_button.config(text="Start")
 
                 self.show_labels()
@@ -222,7 +202,6 @@ class Frame1(ttk.Frame):
                 self.seconds_passed = 0
                 timer.end_time = 0
 
-        print(self.show_display_on_startup)
         if self.show_display_on_startup is False:
             # this bool ^^ is switched to true in main.py
             start_stop_button = tk.Button(self, text="Start", command=update_button)
@@ -241,16 +220,16 @@ class Frame1(ttk.Frame):
         subject_hours, subject_remainder = divmod(self.seconds_passed + general.subject_seconds, 3600)
         subject_minutes, subject_seconds = divmod(subject_remainder, 60)
         self.subject_timer.set(f"{subject_hours}:{subject_minutes}:{subject_seconds}")
-        print(general.subject, f"{subject_hours}:{subject_minutes}:{subject_seconds}")
+        # print(general.subject, f"{subject_hours}:{subject_minutes}:{subject_seconds}")
 
         subtopic_hours, subtopic_remainder = divmod(self.seconds_passed + general.subtopic_seconds, 3600)
         subtopic_minutes, subtopic_seconds = divmod(subtopic_remainder, 60)
         self.subtopic_timer.set(f"{subject_hours}:{subtopic_minutes}:{subtopic_seconds}")
-        print(general.subtopic, f"{subject_hours}:{subtopic_minutes}:{subtopic_seconds}")
+        # print(general.subtopic, f"{subject_hours}:{subtopic_minutes}:{subtopic_seconds}")
 
         project_hours, project_remainder = divmod(self.seconds_passed + general.project_seconds, 3600)
         project_minutes, project_seconds = divmod(project_remainder, 60)
         self.project_timer.set(f"{project_hours}:{project_minutes}:{project_seconds}")
-        print(general.project, f"{project_hours}:{project_minutes}:{project_seconds}")
+        # print(general.project, f"{project_hours}:{project_minutes}:{project_seconds}")
 
         self.update_timer_button(general, timer)

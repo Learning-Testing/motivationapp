@@ -5,6 +5,7 @@ import datetime
 
 import db_manage
 import tab1
+import tab2
 
 
 class TimeCheck:
@@ -43,29 +44,21 @@ class GuiWindow:
         self.master = master
         self.master.title("Motivation Time Tracking App")
 
-        """self.mainframe = tk.Frame(self.master)
-        self.mainframe.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
-        self.mainframe.columnconfigure(0, weight=1)
-        self.mainframe.rowconfigure(0, weight=1)
-        self.mainframe.pack(pady=100, padx=100)"""
-
         self.notebook = ttk.Notebook(self.master)
         # somehow now specifying that all the stuff in tab1 needs to go into Frame1
         self.tab1 = tab1.Frame1(self.notebook, general, timer)
-        self.tab2 = tab1.Frame2(self.notebook)
+        self.tab2 = tab2.Frame2(self.notebook, general)
         self.notebook.add(self.tab1, text="Track Time")
         self.notebook.add(self.tab2, text="Data Display")
         self.notebook.pack()
 
         def handle_display():
             if self.tab1.show_display_on_startup is False:
-                print(self.tab1.show_display_on_startup)
                 self.tab1.call_display(general, timer)
                 self.tab1.update_timer_button(general, timer)
                 self.tab1.show_display_on_startup = True  # this needs to come after update_timer_button
-            """if self.tab1.call_display_bool:
-                self.tab1.hide_labels()
-                """
+                self.tab2.display_data()
+
         handle_display()
 
 
