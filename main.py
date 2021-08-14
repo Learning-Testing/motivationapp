@@ -20,6 +20,7 @@ class TimeCheck:
 class General:
     def __init__(self):
         self.start_button_press = False
+        self.first_iter = True
 
         self.subjects_dropdown = ""
         self.subtopics_dropdown = ""
@@ -29,23 +30,41 @@ class General:
         self.subtopic_options = ["None"]
         self.project_options = ["None"]
 
-        self.subject_seconds = 0
-        self.subtopic_seconds = 0
-        self.project_seconds = 0
+        # dict = {"daily_seconds": 0, "weekly_seconds": 0, "monthly_seconds": 0}, see create_seconds_dict()
+        self.subject_seconds_dict = {}
+        self.create_seconds_dict(self.subject_seconds_dict)
+        self.subtopic_seconds_dict = {}
+        self.create_seconds_dict(self.subtopic_seconds_dict)
+        self.project_seconds_dict = {}
+        self.create_seconds_dict(self.project_seconds_dict)
 
         self.subject = ""
         self.subtopic = ""
         self.project = ""
+
+    @staticmethod
+    def create_seconds_dict(dict_name):
+        dict_name["subject_seconds"] = 0
+        dict_name["daily_seconds"] = 0
+        dict_name["weekly_seconds"] = 0
+        dict_name["monthly_seconds"] = 0
+        dict_name["yearly_seconds"] = 0
+        dict_name["total_seconds"] = 0
+
+    @staticmethod
+    def breakdown_time(seconds):
+        hours, remainder = divmod(seconds, 3600)
+        minutes, handled_seconds = divmod(remainder, 60)
+        return [hours, minutes, handled_seconds]
 
 
 class GuiWindow:
     def __init__(self, master, general, timer):  #
         super(GuiWindow, self).__init__()
         self.master = master
-        self.master.title("Motivation Time Tracking App")
+        self.master.title(f"Motivation Time Tracking App                              File={db_manage.sql_file}")
 
         self.notebook = ttk.Notebook(self.master)
-        # somehow now specifying that all the stuff in tab1 needs to go into Frame1
         self.tab1 = tab1.Frame1(self.notebook, general, timer)
         self.tab2 = tab2.Frame2(self.notebook, general)
         self.notebook.add(self.tab1, text="Track Time")

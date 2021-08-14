@@ -80,7 +80,7 @@ def options_from_sql(general):
     sorted(general.project_options)
 
 
-def seconds_for_item(general):
+def total_seconds_for_item(general):
     conn = sqlite3.connect(sql_file, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     c = conn.cursor()
     sql_subject_seconds = c.execute('SELECT '
@@ -91,7 +91,7 @@ def seconds_for_item(general):
     if sql_subject_seconds is not None:
         subject_seconds_list = sql_subject_seconds.fetchall()
         for start_date, end_date in subject_seconds_list:
-            general.subject_seconds += int((end_date - start_date).total_seconds())
+            general.subject_seconds_dict["total_seconds"] += int((end_date - start_date).total_seconds())
 
     sql_subtopic_seconds = c.execute('SELECT '
                                      'start_time as "[timestamp]", '
@@ -101,7 +101,7 @@ def seconds_for_item(general):
     if sql_subtopic_seconds is not None:
         subtopic_seconds_list = sql_subtopic_seconds.fetchall()
         for start_date, end_date in subtopic_seconds_list:
-            general.subtopic_seconds += int((end_date - start_date).total_seconds())
+            general.subtopic_seconds_dict["total_seconds"] += int((end_date - start_date).total_seconds())
 
     sql_project_seconds = c.execute('SELECT '
                                     'start_time as "[timestamp]", '
@@ -111,13 +111,13 @@ def seconds_for_item(general):
     if sql_project_seconds is not None:
         project_seconds_list = sql_project_seconds.fetchall()
         for start_date, end_date in project_seconds_list:
-            general.project_seconds += int((end_date - start_date).total_seconds())
+            general.project_seconds_dict["total_seconds"] += int((end_date - start_date).total_seconds())
 
     conn.close()
 
 
 def get_times():
-    conn = sqlite3.connect(sql_file)
+    conn = sqlite3.connect(sql_file, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     c = conn.cursor()
     c.execute("SELECT * FROM daily_study WHERE DATE(start_time) == "
               "DATE('now', 'localtime');")  # -- current day
