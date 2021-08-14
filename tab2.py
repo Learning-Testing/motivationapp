@@ -1,6 +1,5 @@
 from tkinter import ttk
 import tkinter as tk
-import time
 
 import db_manage
 
@@ -94,6 +93,7 @@ def handle_subjects_times(str_data):
     """if len(day_week_month_year_list) > 0:"""
     day_week_month_year_list = []
 
+    # it needs to be nested like this, however this is what is likely causing the problem
     for sublist in str_data:
         for i in sublist:
             subject = i[2]
@@ -109,14 +109,18 @@ def handle_subjects_times(str_data):
             else:
                 subject_classes[subject].check_subtopic(subtopic, project, seconds)
 
-        # print(172, subject_classes)
         total_time = 0
         individual_data = ""
 
+        print(117, subject_classes)
         for subject in subject_classes:
-            for subtopic in subject_classes[subject].subtopics_dict:
+            subtopic_dict = subject_classes[subject].subtopics_dict
+            print(120, subject, subtopic_dict)
+            for subtopic in subtopic_dict:
+                print(122, subtopic)
                 for project in subject_classes[subject].subtopics_dict[subtopic]:
                     dict_seconds = subject_classes[subject].subtopics_dict[subtopic][project]
+                    print(124, project, dict_seconds)
                     subject_hours, subject_remainder = divmod(dict_seconds, 3600)
                     subject_minutes, subject_seconds = divmod(subject_remainder, 60)
                     individual_data += (f"{subject} - {subtopic} - {project} = "
@@ -128,4 +132,5 @@ def handle_subjects_times(str_data):
         total_minutes, total_seconds = divmod(total_remainder, 60)
         constructed_str = f"{total_hours} hours, {total_minutes} minutes"
         day_week_month_year_list.append([constructed_str, individual_data])
+        subject_classes = {}
     return day_week_month_year_list
