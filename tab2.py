@@ -21,41 +21,37 @@ class Frame2(ttk.Frame):
 
     def display_data(self):
         db_data = collect_data()
+        print(23, db_data)
         parsed_data = handle_subjects_times(db_data)
+        print(26, parsed_data)
         column_counter = 0
         row_counter = 1
         curr_iter = 0
+        label_iter = 0
 
         for sublist in parsed_data:
             for i in range(len(sublist)):
                 time_data = sublist[column_counter]
-                # if self.first_iter is False:
-                textvar = tk.StringVar()
-                if column_counter == 0:
-                    textvar.set(self.label_strings[curr_iter] + time_data)
-                else:
-                    textvar.set(time_data)
-                row_counter += 1
-
-                curr_label = tk.Label(self, textvariable=textvar)
-                curr_label.grid(column=column_counter, row=row_counter, sticky="w")
-                """self.page_labels.append([curr_label, textvar])
-                else:
-                    # either there's a duplicate, or not iterating over something correctly
-                    if curr_iter == 0:
-                        row_counter = 0
-                    print(48, self.label_strings[curr_iter] + "|||| " + time_data)
-                    # it's not the row counter
+                #print(33, time_data)
+                if self.first_iter is False:
+                    textvar = tk.StringVar()
+                    if column_counter == 0:
+                        textvar.set(self.label_strings[curr_iter] + time_data)
+                    else:
+                        textvar.set(time_data)
                     row_counter += 1
 
-                    if column_counter == 0:
-                        curr_label = self.page_labels[row_counter]
-                        label_stringvar = curr_label[1]
-                        label_stringvar.set(self.label_strings[curr_iter] + time_data)
-                    else:
-                        self.page_labels[row_counter][1].set(time_data)
-                    time.sleep(.25)"""
+                    curr_label = tk.Label(self, textvariable=textvar)
+                    curr_label.grid(column=column_counter, row=row_counter, sticky="w")
 
+                    self.page_labels.append([curr_label, textvar])
+
+                else:
+                    if column_counter == 0:
+                        self.page_labels[label_iter][1].set(self.label_strings[curr_iter] + time_data)
+                    else:
+                        self.page_labels[label_iter][1].set(time_data)
+                    label_iter += 1
                 if column_counter == 0:
                     column_counter += 1
                 else:
@@ -66,7 +62,7 @@ class Frame2(ttk.Frame):
 
 
 def collect_data():
-    all_data = db_manage.get_times()
+    all_data = db_manage.get_times(0)
     str_day_data = all_data[0]
     str_week_data = all_data[1]
     str_month_data = all_data[2]
@@ -90,10 +86,10 @@ class DataTracking:
 
 def handle_subjects_times(str_data):
     subject_classes = {}
-    """if len(day_week_month_year_list) > 0:"""
     day_week_month_year_list = []
 
     # it needs to be nested like this, however this is what is likely causing the problem
+    print(92, str_data)
     for sublist in str_data:
         for i in sublist:
             subject = i[2]
@@ -102,7 +98,7 @@ def handle_subjects_times(str_data):
             start_time = i[5]
             end_time = i[6]
             seconds = int((end_time - start_time).total_seconds())
-
+            #print(100, subject, subtopic, project, seconds)
             if subject not in subject_classes:
                 subject_classes[subject] = DataTracking(subject)
                 subject_classes[subject].check_subtopic(subtopic, project, seconds)
@@ -112,15 +108,11 @@ def handle_subjects_times(str_data):
         total_time = 0
         individual_data = ""
 
-        print(117, subject_classes)
         for subject in subject_classes:
             subtopic_dict = subject_classes[subject].subtopics_dict
-            print(120, subject, subtopic_dict)
             for subtopic in subtopic_dict:
-                print(122, subtopic)
                 for project in subject_classes[subject].subtopics_dict[subtopic]:
                     dict_seconds = subject_classes[subject].subtopics_dict[subtopic][project]
-                    print(124, project, dict_seconds)
                     subject_hours, subject_remainder = divmod(dict_seconds, 3600)
                     subject_minutes, subject_seconds = divmod(subject_remainder, 60)
                     individual_data += (f"{subject} - {subtopic} - {project} = "

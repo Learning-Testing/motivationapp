@@ -26,36 +26,35 @@ def check_existing_tables():
 
     if "quiz_qa" not in table_list:
         c.execute("CREATE TABLE quiz_qa(id INTEGER PRIMARY KEY, user_id INTEGER, "
-                  "question_number INTEGER, question STRING, answer STRING)")
+                  "question_number INTEGER, question STRING, answer STRING, incorrect1 STRING, incorrect2 STRING, "
+                  "incorrect3 STRING, subject STRING, subtopic STRING, project STRING, "
+                  "correct_answer_reason STRING, resources STRING)")
+        # add , correct_answer_reason STRING and a resources? To help understand where knowledge came from/how it works
     if "daily_study" not in table_list:
         c.execute("CREATE TABLE daily_study(id INTEGER PRIMARY KEY, user_id INTEGER, subject STRING, "
-                  "subtopic STRING, project STRING, start_time TIMESTAMP, end_time TIMESTAMP)")
+                  "subtopic STRING, project STRING, start_time TIMESTAMP, end_time TIMESTAMP, event STRING)")
     if "quiz_data" not in table_list:
         c.execute("CREATE TABLE quiz_data(id INTEGER PRIMARY KEY, user_id INTEGER, "
-                  "question_number INTEGER, selected_answer STRING)")
+                  "question_number INTEGER, selected_answer STRING, "
+                  "session INTEGER, start_time TIMESTAMP, endtime TIMESTAMP)")
     conn.commit()
     conn.close()
 
 
-def daily_study_entry(subject, subtopic, project, start_time, end_time):
+def daily_study_entry(subject, subtopic, project, event, start_time, end_time):
     conn = sqlite3.connect(sql_file)
     c = conn.cursor()
-    if subject == "None":
-        subject = None
-    if subtopic == "None":
-        subtopic = None
-    if project == "None":
-        project = None
-    if subject is None and subtopic is None and project is None:
+    if subject == "None" and subtopic == "None" and project == "None" and event == "None":
         pass
     else:
-        c.execute("INSERT INTO Daily_Study (user_id, subject, subtopic, project, start_time, end_time) "
-                  "VALUES (?, ?, ?, ?, ?, ?)", (1,
-                                                subject,
-                                                subtopic,
-                                                project,
-                                                start_time,
-                                                end_time))
+        c.execute("INSERT INTO Daily_Study (user_id, subject, subtopic, project, start_time, end_time, event) "
+                  "VALUES (?, ?, ?, ?, ?, ?, ?)", (1,
+                                                   subject,
+                                                   subtopic,
+                                                   project,
+                                                   start_time,
+                                                   end_time,
+                                                   event))
     conn.commit()
     conn.close()
 
@@ -66,18 +65,26 @@ def options_from_sql(general):
     sql_main_subjects = c.execute("SELECT DISTINCT subject FROM daily_study").fetchall()
     sql_sub_subjects = c.execute("SELECT DISTINCT subtopic FROM daily_study").fetchall()
     sql_projects = c.execute("SELECT DISTINCT project FROM daily_study").fetchall()
+    sql_events = c.execute("SELECT DISTINCT event FROM daily_study").fetchall()
     conn.close()
 
     for i in sql_main_subjects:
-        general.subject_options.append(i[0])
+        if i[0] != "None":
+            general.subject_options.append(i[0])
     for i in sql_sub_subjects:
-        general.subtopic_options.append(i[0])
+        if i[0] != "None":
+            general.subtopic_options.append(i[0])
     for i in sql_projects:
-        general.project_options.append(i[0])
+        if i[0] != "None":
+            general.project_options.append(i[0])
+    for i in sql_events:
+        if i[0] != "None":
+            general.event_options.append(i[0])
 
-    sorted(general.subject_options)
-    sorted(general.subtopic_options)
-    sorted(general.project_options)
+    general.subject_options = sorted(general.subject_options)
+    general.subtopic_options = sorted(general.subtopic_options)
+    general.project_options = sorted(general.project_options)
+    general.event_options = sorted(general.event_options)
 
 
 def total_seconds_for_item(general):
@@ -108,32 +115,49 @@ def total_seconds_for_item(general):
                                     'end_time as "[timestamp]" '
                                     'FROM daily_study WHERE project=?',
                                     (general.project,))
+
     if sql_project_seconds is not None:
         project_seconds_list = sql_project_seconds.fetchall()
         for start_date, end_date in project_seconds_list:
             general.project_seconds_dict["total_seconds"] += int((end_date - start_date).total_seconds())
 
+    sql_event_seconds = c.execute('SELECT '
+                                  'start_time as "[timestamp]", '
+                                  'end_time as "[timestamp]" '
+                                  'FROM daily_study WHERE event=?',
+                                  (general.event,))
+
+    if sql_event_seconds is not None:
+        event_seconds_list = sql_event_seconds.fetchall()
+        for start_date, end_date in event_seconds_list:
+            general.event_seconds_dict["total_seconds"] += int((end_date - start_date).total_seconds())
+
     conn.close()
 
 
-def get_times():
+def get_times(last_id):
     conn = sqlite3.connect(sql_file, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     c = conn.cursor()
     c.execute("SELECT * FROM daily_study WHERE DATE(start_time) == "
-              "DATE('now', 'localtime');")  # -- current day
+              "DATE('now', 'localtime') AND id > ?;", (last_id,))
+    # -- current day
     str_day_data = c.fetchall()
 
     c.execute("SELECT * FROM daily_study WHERE DATE(start_time) >= "
-              "DATE('now', 'localtime', 'weekday 0', '-7 days');")  # -- current week
+              "DATE('now', 'localtime', 'weekday 0', '-7 days') AND id > ?;", (last_id,))
+    # -- current week
     str_week_data = c.fetchall()
 
     c.execute("SELECT * FROM daily_study WHERE start_time BETWEEN DATE('now', 'start of month') AND "
-              "DATE('now', 'localtime', 'start of month', '+1 month', '-1 day');")  # -- current month
+              "DATE('now', 'localtime', 'start of month', '+1 month', '-1 day') AND id > ?;", (last_id,))
+    # -- current month
     str_month_data = c.fetchall()
 
     c.execute("SELECT * FROM daily_study WHERE start_time BETWEEN DATE('now', 'start of year') AND "
-              "DATE('now', 'localtime', 'start of year', '+12 month', '-1 day');")  # -- current year
+              "DATE('now', 'localtime', 'start of year', '+12 month', '-1 day') AND id > ?;", (last_id,))
+    # -- current year
     str_year_data = c.fetchall()
+    conn.close()
 
     return [str_day_data, str_week_data, str_month_data, str_year_data]
 
@@ -148,11 +172,62 @@ def copy_data():
     all_data = c_live.fetchall()
     conn_live.close()
 
-    for (num_id, user_id, subject, subtopic, project, start_time, end_time) in all_data:
-        c_testing.execute("INSERT INTO daily_study VALUES(?, ?, ?, ?, ?, ?, ?)",
-                          (num_id, user_id, subject, subtopic, project, start_time, end_time))
+    for (num_id, user_id, subject, subtopic, project, start_time, end_time, event) in all_data:
+        c_testing.execute("INSERT INTO daily_study VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+                          (num_id, user_id, subject, subtopic, project, start_time, end_time, event))
     conn_testing.commit()
     conn_testing.close()
 
 
+def get_distinct_sets():
+    conn = sqlite3.connect(sql_file)
+    c = conn.cursor()
+    c.execute("SELECT DISTINCT subject, subtopic, project FROM daily_study")
+    sets = c.fetchall()
+    conn.close()
+
+    new_sets = []
+    for i in sets:
+        new_sets.append([i[0], i[1], i[2]])
+    return new_sets
+
+
+def add_quiz_question_data(question,
+                           answer,
+                           incorrect1,
+                           incorrect2,
+                           incorrect3,
+                           subject,
+                           subtopic,
+                           project,
+                           answer_reason,
+                           resources):
+    conn = sqlite3.connect(sql_file)
+    c = conn.cursor()
+    c.execute("INSERT INTO quiz_qa "
+              "(user_id, "
+              "question, "
+              "answer, "
+              "incorrect1, "
+              "incorrect2, "
+              "incorrect3, "
+              "subject, "
+              "subtopic, "
+              "project, "
+              "correct_answer_reason, "
+              "resources)"
+              " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              (1,
+               question,
+               answer,
+               incorrect1,
+               incorrect2,
+               incorrect3,
+               subject,
+               subtopic,
+               project,
+               answer_reason,
+               resources))
+    conn.commit()
+    conn.close()
 

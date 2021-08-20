@@ -6,6 +6,7 @@ import datetime
 import db_manage
 import tab1
 import tab2
+import tab3
 
 
 class TimeCheck:
@@ -22,13 +23,10 @@ class General:
         self.start_button_press = False
         self.first_iter = True
 
-        self.subjects_dropdown = ""
-        self.subtopics_dropdown = ""
-        self.project_dropdown = ""
-
         self.subject_options = ["None"]
         self.subtopic_options = ["None"]
         self.project_options = ["None"]
+        self.event_options = ["None"]
 
         # dict = {"daily_seconds": 0, "weekly_seconds": 0, "monthly_seconds": 0}, see create_seconds_dict()
         self.subject_seconds_dict = {}
@@ -37,10 +35,15 @@ class General:
         self.create_seconds_dict(self.subtopic_seconds_dict)
         self.project_seconds_dict = {}
         self.create_seconds_dict(self.project_seconds_dict)
+        self.event_seconds_dict = {}
+        self.create_seconds_dict(self.event_seconds_dict)
 
         self.subject = ""
         self.subtopic = ""
         self.project = ""
+        self.event = ""
+
+        self.last_id = 0
 
     @staticmethod
     def create_seconds_dict(dict_name):
@@ -67,9 +70,11 @@ class GuiWindow:
         self.notebook = ttk.Notebook(self.master)
         self.tab1 = tab1.Frame1(self.notebook, general, timer)
         self.tab2 = tab2.Frame2(self.notebook, general)
+        self.tab3 = tab3.Frame3(self.notebook)
         self.notebook.add(self.tab1, text="Track Time")
         self.notebook.add(self.tab2, text="Data Display")
-        self.notebook.pack()
+        self.notebook.add(self.tab3, text="Quiz Data Entry")
+        self.notebook.pack(fill="both", expand=True)
 
         def handle_display():
             if self.tab1.show_display_on_startup is False:
@@ -77,7 +82,7 @@ class GuiWindow:
                 self.tab1.update_timer_button(general, timer)
                 self.tab1.show_display_on_startup = True  # this needs to come after update_timer_button
                 self.tab2.display_data()
-
+                #self.tab3.
         handle_display()
 
 
