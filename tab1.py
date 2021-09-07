@@ -149,7 +149,6 @@ class Frame1(ttk.Frame):
         self.subtopics_dropdown.grid_remove()
         self.project_dropdown.grid_remove()
         self.event_dropdown.grid_remove()
-        print(147)
 
         # the time periods
         self.session_frame_label.grid(row=self.session_row, column=0)

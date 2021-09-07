@@ -7,6 +7,7 @@ import db_manage
 import tab1
 import tab2
 import tab3
+import tab4
 
 
 class TimeCheck:
@@ -16,6 +17,9 @@ class TimeCheck:
 
     def set_time_start(self):
         self.start_time = datetime.datetime.now()
+
+    def set_time_end(self):
+        self.end_time = datetime.datetime.now()
 
 
 class General:
@@ -62,40 +66,45 @@ class General:
 
 
 class GuiWindow:
-    def __init__(self, master, general, timer):  #
+    def __init__(self, master, general):  #
         super(GuiWindow, self).__init__()
         self.master = master
         self.master.title(f"Motivation Time Tracking App                              File={db_manage.sql_file}")
 
+        t1_timer = TimeCheck()  # used explicitly for tab1
+        t4_timer = TimeCheck()
+
         self.notebook = ttk.Notebook(self.master)
-        self.tab1 = tab1.Frame1(self.notebook, general, timer)
+        self.tab1 = tab1.Frame1(self.notebook, general, t1_timer)
         self.tab2 = tab2.Frame2(self.notebook, general)
         self.tab3 = tab3.Frame3(self.notebook)
+        self.tab4 = tab4.Frame4(self.notebook, tab1=self.tab1, timer=t4_timer)
         self.notebook.add(self.tab1, text="Track Time")
         self.notebook.add(self.tab2, text="Data Display")
         self.notebook.add(self.tab3, text="Quiz Data Entry")
+        self.notebook.add(self.tab4, text="Quiz Taking")
         self.notebook.pack(fill="both", expand=True)
 
         def handle_display():
             if self.tab1.show_display_on_startup is False:
-                self.tab1.call_display(general, timer)
-                self.tab1.update_timer_button(general, timer)
+                self.tab1.call_display(general, t1_timer)
+                self.tab1.update_timer_button(general, t1_timer)
                 self.tab1.show_display_on_startup = True  # this needs to come after update_timer_button
                 self.tab2.display_data()
+                self.tab4.display_options()
                 #self.tab3.
         handle_display()
 
 
 def main():
     general = General()
-    timer = TimeCheck()
 
     db_manage.check_if_db_exists()
     db_manage.check_existing_tables()
     db_manage.options_from_sql(general)
 
     root = tk.Tk()
-    GuiWindow(root, general, timer)  #
+    GuiWindow(root, general)  #
     root.mainloop()
 
 

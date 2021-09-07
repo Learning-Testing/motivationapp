@@ -36,7 +36,7 @@ def check_existing_tables():
     if "quiz_data" not in table_list:
         c.execute("CREATE TABLE quiz_data(id INTEGER PRIMARY KEY, user_id INTEGER, "
                   "question_number INTEGER, selected_answer STRING, "
-                  "session INTEGER, start_time TIMESTAMP, endtime TIMESTAMP)")
+                  "session INTEGER, start_time TIMESTAMP, end_time TIMESTAMP)")
     conn.commit()
     conn.close()
 
@@ -231,3 +231,80 @@ def add_quiz_question_data(question,
     conn.commit()
     conn.close()
 
+
+def get_questions(limit, subject, subtopic, project):
+    conn = sqlite3.connect(sql_file)
+    c = conn.cursor()
+    params = []
+    base_select = "SELECT * FROM quiz_qa WHERE "
+
+    joiner = False
+    if subject != "None" and subtopic != "None" or \
+        subject != "None" and project != "None" or \
+            subtopic != "None" and project != "None":
+        joiner = True
+
+    if subject is not None:
+        base_select += "subject=? "
+        if joiner:
+            base_select += "AND "
+        params.append(subject)
+    if subtopic is not None:
+        base_select += "subtopic=? "
+        if joiner:
+            base_select += "AND "
+        params.append(subtopic)
+    if project is not None:
+        base_select += "project=? "
+        params.append(project)
+
+    params.append(limit)
+    params = tuple(params)
+
+    last_part = "ORDER BY RANDOM() LIMIT ?"
+    full_query = base_select + last_part
+
+    c.execute(full_query, params)
+    data = c.fetchall()
+    conn.close()
+    return data
+
+
+def write_to_quiz_data(question_num, selected_answer, session_num, start_time, end_time):
+    conn = sqlite3.connect(sql_file)
+    c = conn.cursor()
+    c.execute("INSERT INTO quiz_data (user_id, question_number, selected_answer, session, start_time, end_time) "
+              "VALUES (?, ?, ?, ?, ?, ?)", (1, question_num, selected_answer, session_num, start_time, end_time))
+    conn.commit()
+    conn.close()
+
+
+def get_session_num():
+    conn = sqlite3.connect(sql_file)
+    c = conn.cursor()
+    c.execute("SELECT IFNULL(MAX(session), 1) FROM quiz_data")
+    num = c.fetchone()[0]
+    conn.close()
+
+    return num
+
+
+def get_results(session_num):
+    conn = sqlite3.connect(sql_file)
+    c = conn.cursor()
+    c.execute("""
+              SELECT 
+                quiz_qa.question, 
+                quiz_qa.answer, 
+                quiz_data.selected_answer, 
+                quiz_qa.correct_answer_reason, 
+                quiz_qa.resources
+              FROM 
+                quiz_qa
+              INNER JOIN quiz_data ON quiz_qa.id = quiz_data.question_number
+              WHERE quiz_data.session = ?
+              """, (session_num,))
+    data = c.fetchall()
+    conn.close()
+
+    return data
